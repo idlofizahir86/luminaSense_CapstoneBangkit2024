@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.bangkit.luminasense.screens.HomeScreen
 import com.bangkit.luminasense.screens.LoginScreen
 import com.bangkit.luminasense.screens.OnBoardingScreen
 import com.bangkit.luminasense.screens.RegisterScreen
@@ -24,7 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             LuminaSenseTheme {
-                
+
                  // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -40,6 +41,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("onBoarding"){
                             OnBoardingScreen(navController= navController)
+                        }
+                        composable("home"){
+                            HomeScreen(navController= navController)
                         }
                         composable("login"){
                             LoginScreen(navController= navController)

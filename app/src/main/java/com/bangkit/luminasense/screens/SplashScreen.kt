@@ -1,9 +1,5 @@
 package com.bangkit.luminasense.screens
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,37 +15,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.bangkit.luminasense.MainActivity
-import com.bangkit.luminasense.R
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
-import com.bangkit.luminasense.ui.theme.LuminaSenseTheme
+import com.bangkit.luminasense.R
+import com.bangkit.luminasense.backend.preferences.SharedPrefHelper
 import com.bangkit.luminasense.ui.theme.kDarkColor
 import kotlinx.coroutines.delay
 
-//class SplashScreenActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        setContent {
-//            LuminaSenseTheme {
-//                SplashScreen {
-//
-//                    startActivity(Intent(this, MainActivity::class.java))
-//                    finish()
-//                }
-//            }
-//        }
-//    }
-//}
-
-
 @Composable
 fun SplashScreen(navController: NavController) {
+    val context = LocalContext.current
+
     LaunchedEffect(Unit) {
         delay(3000L)
-        navController.navigate("onBoarding")
+        val sharedPrefHelper = SharedPrefHelper(context)
+        val token = sharedPrefHelper.getToken()
+        if (token != null) {
+            navController.navigate("home") {
+                popUpTo("splash") { inclusive = true }
+            }
+        } else {
+            navController.navigate("onBoarding") {
+                popUpTo("splash") { inclusive = true }
+            }
+        }
     }
 
     Scaffold(
@@ -82,10 +73,8 @@ fun SplashScreen(navController: NavController) {
                             .height(68.dp)
                             .width(256.dp)
                     )
-
                 }
             }
         }
     )
 }
-

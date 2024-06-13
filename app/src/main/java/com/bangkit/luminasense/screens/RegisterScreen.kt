@@ -1,6 +1,5 @@
 package com.bangkit.luminasense.screens
 
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,35 +8,63 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.bangkit.luminasense.R
+import com.bangkit.luminasense.backend.service.ApiConfig
+import com.bangkit.luminasense.backend.service.RegisterRequest
+import com.bangkit.luminasense.backend.service.RegisterResponse
 import com.bangkit.luminasense.components.CustomButton
 import com.bangkit.luminasense.components.CustomTextFormField
+import com.bangkit.luminasense.components.ValidationType
 import com.bangkit.luminasense.ui.theme.TextStyles
 import com.bangkit.luminasense.ui.theme.kAccentColor
 import com.bangkit.luminasense.ui.theme.kDarkColor
 import com.bangkit.luminasense.ui.theme.kLightColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun RegisterScreen(navController: NavController) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val (name, setName) = rememberSaveable {
+        mutableStateOf("")
+    }
+    var (email, setEmail) = remember {
+        mutableStateOf("")
+    }
+    val (pass, setPass) = rememberSaveable {
+        mutableStateOf("")
+    }
+    val (passConfirm, setPassConfirm) = rememberSaveable {
+        mutableStateOf("")
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         content = { paddingValues ->
             Surface(
                 modifier = Modifier
@@ -52,73 +79,127 @@ fun RegisterScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text(text = "REGISTER", style = TextStyles.boldTextStyle.copy(
-                        fontSize = 20.sp,
-                        color = kLightColor,
-                    ))
-                    Spacer(modifier = Modifier.height(48.dp),)
-                    var namaText by remember { mutableStateOf("") }
+                    Text(
+                        text = "REGISTER",
+                        style = TextStyles.boldTextStyle.copy(
+                            fontSize = 20.sp,
+                            color = kLightColor,
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(48.dp))
+
                     CustomTextFormField(
                         title = "Nama*",
                         hintText = "Masukkan nama anda",
-                        value = namaText,
-                        isPassword = false)
+                        value = name,
+                        onValueChange = setName,
+                        validationType = ValidationType.Name,
+                        isPassword = false
+                    )
 
-                    var emailText by remember { mutableStateOf("") }
                     CustomTextFormField(
                         title = "Email*",
                         hintText = "Masukkan email anda",
-                        value = emailText,
-                        isPassword = false)
+                        value = email,
+                        onValueChange = setEmail,
+                        validationType = ValidationType.Email,
+                        isPassword = false
+                    )
 
-                    var passText by remember { mutableStateOf("") }
                     CustomTextFormField(
                         title = "Password*",
                         hintText = "Masukkan password anda",
-                        value = passText,
-                        isPassword = true)
-                    var passConfirmText by remember { mutableStateOf("") }
+                        value = pass,
+                        onValueChange = setPass,
+                        validationType = ValidationType.Password,
+
+                        isPassword = true
+                    )
+
                     CustomTextFormField(
                         title = "Konfirmasi Password*",
                         hintText = "Ulangi password anda",
-                        value = passConfirmText,
-                        isPassword = true)
-                    Spacer(modifier = Modifier.height(48.dp),)
-                    Box (
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    ){
+                        value = passConfirm,
+                        onValueChange = setPassConfirm,
+                        validationType = ValidationType.PasswordConfirmation,
+                        isPassword = true,
+                        passwordToMatch = pass
+                    )
+
+                    Spacer(modifier = Modifier.height(48.dp))
+
+                    Box(modifier = Modifier.padding(horizontal = 20.dp)) {
                         CustomButton(
                             title = "Register",
                             color = kAccentColor,
                             titleColor = kLightColor,
-                            onTap = { /* Tindakan saat tombol diklik */ },
-                            iconResId = null  // Atau tidak menentukan ikon
+                            onTap = {
+                                println("Nama: ${name}, Email: $email, Password: $pass, Konfirmasi Password: $passConfirm")
+                                coroutineScope.launch {
+                                    val apiService = ApiConfig.getApiService()
+                                    val registerRequest = RegisterRequest(name, email, pass, passConfirm)
+                                    apiService.register(registerRequest).enqueue(object : Callback<RegisterResponse> {
+                                        override fun onResponse(call: Call<RegisterResponse>, response: Response<RegisterResponse>) {
+                                            if (response.isSuccessful) {
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(
+                                                        message = "Registrasi berhasil",
+                                                        duration = SnackbarDuration.Short
+                                                    )
+                                                    navController.navigate("login")
+                                                }
+                                            } else {
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(
+                                                        message = "Registrasi gagal",
+                                                        duration = SnackbarDuration.Short
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = "Registrasi error: ${t.message}",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            }
+                                        }
+                                    })
+                                }
+                            },
+                            iconResId = null
                         )
                     }
-                    Spacer(modifier = Modifier.height(20.dp),)
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Sudah punya akun?  ",
+                        Text(
+                            text = "Sudah punya akun?  ",
                             style = TextStyles.regularTextStyle.copy(
                                 fontSize = 12.sp,
                                 color = kLightColor
-                            ))
-                        Surface (
+                            )
+                        )
+                        Surface(
                             onClick = {
                                 navController.navigate("login")
                             },
                             color = Color.Transparent
-                        ){
-                            Text(text = "Login Sekarang",
+                        ) {
+                            Text(
+                                text = "Login Sekarang",
                                 style = TextStyles.regularTextStyle.copy(
                                     fontSize = 12.sp,
                                     color = kAccentColor,
-                                ))
+                                )
+                            )
                         }
                     }
-
-
                 }
             }
         }
