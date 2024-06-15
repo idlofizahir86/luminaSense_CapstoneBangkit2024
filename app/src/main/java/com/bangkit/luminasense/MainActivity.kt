@@ -14,6 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.bangkit.luminasense.screens.HomeScreen
+import com.bangkit.luminasense.screens.IpInputScreen
+import com.bangkit.luminasense.screens.LivePortraitScreen
 import com.bangkit.luminasense.screens.LoginScreen
 import com.bangkit.luminasense.screens.OnBoardingScreen
 import com.bangkit.luminasense.screens.RegisterScreen
@@ -50,6 +52,12 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("register"){
                             RegisterScreen(navController= navController)
+                        }
+                        composable("livePortrait"){
+                            LivePortraitScreen(navController= navController)
+                        }
+                        composable("ipInput"){
+                            IpInputScreen(navController= navController)
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 package com.bangkit.luminasense.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import com.bangkit.luminasense.backend.service.LoginRequest
 import com.bangkit.luminasense.backend.service.LoginResponse
 import com.bangkit.luminasense.components.CustomButton
 import com.bangkit.luminasense.components.CustomTextFormField
+import com.bangkit.luminasense.components.LoadingAnimation
 import com.bangkit.luminasense.components.ValidationType
 import com.bangkit.luminasense.ui.theme.TextStyles
 import com.bangkit.luminasense.ui.theme.kAccentColor
@@ -56,141 +58,170 @@ fun LoginScreen(navController: NavController) {
         mutableStateOf("")
     }
 
+    var isLoading by remember { mutableStateOf(false) }
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         content = { paddingValues ->
-            Surface(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
-                color = kDarkColor
+                    .padding(paddingValues)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceEvenly
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = kDarkColor
                 ) {
-                    Text(
-                        text = "LOGIN",
-                        style = TextStyles.boldTextStyle.copy(
-                            fontSize = 20.sp,
-                            color = kLightColor,
-                        )
-                    )
-                    Spacer(modifier = Modifier.height(48.dp))
-
-                    CustomTextFormField(
-                        title = "Email*",
-                        hintText = "Masukkan email anda",
-                        value = email,
-                        onValueChange = setEmail,
-                        validationType = ValidationType.Email,
-                        isPassword = false
-                    )
-
-                    CustomTextFormField(
-                        title = "Password*",
-                        hintText = "Masukkan password anda",
-                        value = pass,
-                        onValueChange = setPass,
-                        validationType = ValidationType.Password,
-
-                        isPassword = true
-                    )
-
-                    Spacer(modifier = Modifier.height(48.dp))
-                    Box(
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    ) {
-                        CustomButton(
-                            title = "Login",
-                            color = kAccentColor,
-                            titleColor = kLightColor,
-                            onTap = {
-                                println("Email: $email, Password: $pass")
-
-                                coroutineScope.launch {
-                                    val apiService = ApiConfig.getApiService()
-                                    val loginRequest = LoginRequest(email = email, password = pass)
-                                    apiService.login(loginRequest).enqueue(object :
-                                        Callback<LoginResponse> {
-                                        override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                                            if (response.isSuccessful) {
-                                                val token = response.body()?.token
-                                                if (token != null) {
-                                                    println("Token $token")
-                                                    val sharedPrefHelper = SharedPrefHelper(context = navController.context)
-                                                    sharedPrefHelper.saveToken(token)
-                                                    coroutineScope.launch {
-                                                        // Navigate to the next screen after successful login
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "Login berhasil",
-                                                            duration = SnackbarDuration.Short
-                                                        )
-                                                        navController.navigate("home"){
-                                                            popUpTo("login") { inclusive = true }
-                                                        }
-                                                    }
-                                                } else {
-                                                    coroutineScope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "Login gagal",
-                                                            duration = SnackbarDuration.Short
-                                                        )
-                                                    }
-                                                }
-                                            } else {
-                                                coroutineScope.launch {
-                                                    snackbarHostState.showSnackbar(
-                                                        message = "Login gagal",
-                                                        duration = SnackbarDuration.Short
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                                            coroutineScope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = "Login error: ${t.message}",
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                            }
-                                        }
-                                    })
-                                }
-                            },
-                            iconResId = null
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .wrapContentSize(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Text(
-                            text = "Tidak punya akun?  ",
-                            style = TextStyles.regularTextStyle.copy(
-                                fontSize = 12.sp,
-                                color = kLightColor
+                            text = "LOGIN",
+                            style = TextStyles.boldTextStyle.copy(
+                                fontSize = 20.sp,
+                                color = kLightColor,
                             )
                         )
-                        Surface(
-                            onClick = {
-                                navController.navigate("register")
-                            },
-                            color = Color.Transparent
+                        Spacer(modifier = Modifier.height(48.dp))
+
+                        CustomTextFormField(
+                            title = "Email*",
+                            hintText = "Masukkan email anda",
+                            value = email,
+                            onValueChange = setEmail,
+                            validationType = ValidationType.Email,
+                            isPassword = false
+                        )
+
+                        CustomTextFormField(
+                            title = "Password*",
+                            hintText = "Masukkan password anda",
+                            value = pass,
+                            onValueChange = setPass,
+                            validationType = ValidationType.Password,
+                            isPassword = true
+                        )
+
+                        Spacer(modifier = Modifier.height(48.dp))
+                        Box(
+                            modifier = Modifier.padding(horizontal = 20.dp)
                         ) {
-                            Text(
-                                text = "Daftar Sekarang",
-                                style = TextStyles.regularTextStyle.copy(
-                                    fontSize = 12.sp,
-                                    color = kAccentColor,
-                                )
+                            CustomButton(
+                                title = "Login",
+                                color = kAccentColor,
+                                titleColor = kLightColor,
+                                onTap = {
+                                    if (!isLoading) {
+                                        isLoading = true
+                                        println("Email: $email, Password: $pass")
+
+                                        coroutineScope.launch {
+                                            val apiService = ApiConfig.getApiService()
+                                            val loginRequest = LoginRequest(email = email, password = pass)
+                                            apiService.login(loginRequest).enqueue(object :
+                                                Callback<LoginResponse> {
+                                                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                                                    if (response.isSuccessful) {
+                                                        val token = response.body()?.token
+                                                        if (token != null) {
+                                                            println("Token $token")
+                                                            val sharedPrefHelper = SharedPrefHelper(context = navController.context)
+                                                            sharedPrefHelper.saveToken(token)
+                                                            coroutineScope.launch {
+                                                                snackbarHostState.showSnackbar(
+                                                                    message = "Login berhasil",
+                                                                    duration = SnackbarDuration.Short
+                                                                )
+                                                                isLoading = false // Matikan loading indicator
+                                                                // Navigate to the next screen after successful login
+                                                                navController.navigate("home") {
+                                                                    popUpTo(0) { inclusive = true }
+                                                                }
+
+                                                            }
+                                                        } else {
+
+                                                            coroutineScope.launch {
+                                                                snackbarHostState.showSnackbar(
+                                                                    message = "Login gagal",
+                                                                    duration = SnackbarDuration.Short
+                                                                )
+                                                            }
+                                                            isLoading = false // Matikan loading indicator
+
+                                                        }
+                                                    } else {
+
+                                                        coroutineScope.launch {
+                                                            snackbarHostState.showSnackbar(
+                                                                message = "Login gagal",
+                                                                duration = SnackbarDuration.Short
+                                                            )
+                                                        }
+                                                        isLoading = false // Matikan loading indicator
+
+                                                    }
+                                                }
+
+                                                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                                                    coroutineScope.launch {
+                                                        snackbarHostState.showSnackbar(
+                                                            message = "Login error: ${t.message}",
+                                                            duration = SnackbarDuration.Short
+                                                        )
+                                                    }
+                                                    isLoading = false // Matikan loading indicator
+                                                }
+                                            })
+                                        }
+                                    }
+                                },
+                                iconResId = null
                             )
                         }
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Tidak punya akun?  ",
+                                style = TextStyles.regularTextStyle.copy(
+                                    fontSize = 12.sp,
+                                    color = kLightColor
+                                )
+                            )
+                            Surface(
+                                onClick = {
+                                    navController.navigate("register")
+                                },
+                                color = Color.Transparent
+                            ) {
+                                Text(
+                                    text = "Daftar Sekarang",
+                                    style = TextStyles.regularTextStyle.copy(
+                                        fontSize = 12.sp,
+                                        color = kAccentColor,
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Tampilkan LoadingAnimation dengan lapisan abu-abu transparan ketika isLoading adalah true
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Gray.copy(alpha = 0.5f))
+                            .wrapContentSize(Alignment.Center)
+                    ) {
+                        LoadingAnimation()
                     }
                 }
             }

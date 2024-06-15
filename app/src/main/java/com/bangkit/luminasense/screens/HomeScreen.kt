@@ -117,7 +117,7 @@ fun HomeScreen(navController: NavController) {
                                 titleColor = Color.Black,
                                 descriptionColor = Color.Gray,
                                 iconResId = R.drawable.ic_phone_portrait,
-                                onTap = { /* Handle card tap */ },
+                                onTap = { navController.navigate("livePortrait")  },
                                 modifier = cardModifier
                             )
                             CustomItemCard(
