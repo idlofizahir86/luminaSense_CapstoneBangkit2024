@@ -35,4 +35,10 @@ class SharedPrefHelper(context: Context) {
     fun getIpAddress(): String? {
         return sharedPreferences.getString(ipKey, null)
     }
+
+    fun clearIpAddress() {
+        val editor = sharedPreferences.edit()
+        editor.remove(ipKey)
+        editor.apply()
+    }
 }

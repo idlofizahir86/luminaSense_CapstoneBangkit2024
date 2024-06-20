@@ -18,6 +18,7 @@ import com.bangkit.luminasense.screens.IpInputScreen
 import com.bangkit.luminasense.screens.LivePortraitScreen
 import com.bangkit.luminasense.screens.LoginScreen
 import com.bangkit.luminasense.screens.OnBoardingScreen
+import com.bangkit.luminasense.screens.ProfileScreen
 import com.bangkit.luminasense.screens.RegisterScreen
 import com.bangkit.luminasense.screens.SplashScreen
 import com.bangkit.luminasense.ui.theme.LuminaSenseTheme
@@ -54,10 +55,13 @@ class MainActivity : ComponentActivity() {
                             RegisterScreen(navController= navController)
                         }
                         composable("livePortrait"){
-                            LivePortraitScreen(navController= navController)
+                            LivePortraitScreen(navController= navController, context = this@MainActivity)
                         }
                         composable("ipInput"){
                             IpInputScreen(navController= navController)
+                        }
+                        composable("profile"){
+                           ProfileScreen(navController = navController)
                         }
                     }
                 }

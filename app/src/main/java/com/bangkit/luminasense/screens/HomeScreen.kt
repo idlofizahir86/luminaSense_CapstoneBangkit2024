@@ -141,7 +141,7 @@ fun HomeScreen(navController: NavController) {
                                 titleColor = Color.Black,
                                 descriptionColor = Color.Gray,
                                 iconResId = R.drawable.ic_person,
-                                onTap = { /* Handle card tap */ },
+                                onTap = { navController.navigate("profile") },
                                 modifier = cardModifier
                             )
                             CustomItemCard(
@@ -162,6 +162,7 @@ fun HomeScreen(navController: NavController) {
                             iconResId = null,
                             onTap = {
                                 sharedPrefHelper.clearToken()
+                                sharedPrefHelper.clearIpAddress()
                                 navController.navigate("onBoarding") {
                                     popUpTo("home") { inclusive = true }
                                 }
